@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FetalAI — Clinical Analysis Input</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --secondary: #f0fdfa;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --text: #334155;
+            --text-light: #64748b;
+            --white: #ffffff;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --glass: rgba(255, 255, 255, 0.9);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--white);
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            opacity: 0;
+            animation: slideIn 0.5s ease forwards;
+            max-width: 350px;
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.warning { border-left-color: var(--warning); }
+        .toast.error { border-left-color: var(--danger); }
+
+        @keyframes slideIn {
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(400px); }
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            color: var(--text-light);
+            font-size: 18px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        /* Sidebar Info Panel */
+        .info-panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            position: sticky;
+            top: 20px;
+        }
+
+        .fetal-image {
+            width: 100%;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #a7f3d0;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text h4 {
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .status-text p {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .info-list {
+            list-style: none;
+        }
+
+        .info-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .info-list li i {
+            color: var(--primary);
+            width: 20px;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .form-header h2 {
+            font-size: 24px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-header h2 i {
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            position: relative;
+            animation: fadeUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.15s; }
+        .form-group:nth-child(3) { animation-delay: 0.2s; }
+        .form-group:nth-child(4) { animation-delay: 0.25s; }
+        .form-group:nth-child(5) { animation-delay: 0.3s; }
+        .form-group:nth-child(6) { animation-delay: 0.35s; }
+        .form-group:nth-child(7) { animation-delay: 0.4s; }
+        .form-group:nth-child(8) { animation-delay: 0.45s; }
+        .form-group:nth-child(9) { animation-delay: 0.5s; }
+        .form-group:nth-child(10) { animation-delay: 0.55s; }
+        .form-group:nth-child(11) { animation-delay: 0.6s; }
+        .form-group:nth-child(12) { animation-delay: 0.65s; }
+        .form-group:nth-child(13) { animation-delay: 0.7s; }
+        .form-group:nth-child(14) { animation-delay: 0.75s; }
+        .form-group:nth-child(15) { animation-delay: 0.8s; }
+        .form-group:nth-child(16) { animation-delay: 0.85s; }
+        .form-group:nth-child(17) { animation-delay: 0.9s; }
+        .form-group:nth-child(18) { animation-delay: 0.95s; }
+        .form-group:nth-child(19) { animation-delay: 1.0s; }
+        .form-group:nth-child(20) { animation-delay: 1.05s; }
+        .form-group:nth-child(21) { animation-delay: 1.1s; }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 14px 14px 42px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: var(--white);
+            color: var(--dark);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .input-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Submit Button */
+        .submit-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: var(--white);
+            padding: 16px 48px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(15, 118, 110, 0.3);
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(15, 118, 110, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-submit:hover i {
+            transform: translateX(4px);
+        }
+
+        .btn-reset {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid #e2e8f0;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-reset:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* Validation States */
+        .form-group.error input {
+            border-color: var(--danger);
+            background: #fef2f2;
+        }
+
+        .form-group.success input {
+            border-color: var(--success);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .info-panel { position: static; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Clinical Fetal Analysis</h1>
+            <p>Enter comprehensive cardiotocography parameters for AI-powered health assessment</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Sidebar -->
+            <aside class="info-panel">
+                <img src="https://media.istockphoto.com/id/487036354/photo/medical-illustration.jpg?s=170667a&w=0&k=20&c=lpwLtc0x3fO7GDjDsJC-MuLOrrgxfC9hooQmJCbwklk=" 
+                     alt="Fetus in Womb" class="fetal-image">
+                
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <div class="status-text">
+                        <h4>System Active</h4>
+                        <p>Ready to process CTG data</p>
+                    </div>
+                </div>
+
+                <ul class="info-list">
+                    <li><i class="fas fa-heartbeat"></i> Real-time FHR Analysis</li>
+                    <li><i class="fas fa-wave-square"></i> Variability Monitoring</li>
+                    <li><i class="fas fa-chart-bar"></i> Histogram Processing</li>
+                    <li><i class="fas fa-brain"></i> Neural Network Classifier</li>
+                    <li><i class="fas fa-shield-alt"></i> HIPAA Compliant</li>
+                </ul>
+            </aside>
+
+            <!-- Form -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2><i class="fas fa-clipboard-list"></i> CTG Parameters</h2>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <form action="/predict" method="post" id="fetalForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Baseline Value (bpm)</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-heartbeat"></i>
+                                <input type="number" step="0.001" name="baseline_value" placeholder="e.g., 120.0" required>
+                            </div>
+                            <div class="input-hint"><i class="fas fa-info-circle"></i> Normal range: 110-160 bpm</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Accelerations</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-arrow-up"></i>
+                                <input type="number" step="0.001" name="accelerations" placeholder="e.g., 0.000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fetal Movement</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-baby"></i>
+                                <input type="number" step="0.001" name="fetal_movement" placeholder="e.g., 0.000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Uterine Contractions</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                                <input type="number" step="0.001" name="uterine_contractions" placeholder="e.g., 0.000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Light Decelerations</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-angle-down"></i>
+                                <input type="number" step="0.001" name="light_decelerations" placeholder="e.g., 0.000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Severe Decelerations</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <input type="number" step="0.001" name="severe_decelerations" placeholder="e.g., 0.000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Prolongued Decelerations</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-hourglass-half"></i>
+                                <input type="number" step="0.001" name="prolongued_decelerations" placeholder="e.g., 0.000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Abnormal Short Term Variability</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-wave-square"></i>
+                                <input type="number" step="0.001" name="abnormal_short_term_variability" placeholder="e.g., 12.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mean Value of Short Term Variability</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-calculator"></i>
+                                <input type="number" step="0.001" name="mean_value_of_short_term_variability" placeholder="e.g., 0.4" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>% Abnormal Long Term Variability</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-percentage"></i>
+                                <input type="number" step="0.001" name="percentage_of_time_with_abnormal_long_term_variability" placeholder="e.g., 0.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mean Value of Long Term Variability</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-chart-line"></i>
+                                <input type="number" step="0.001" name="mean_value_of_long_term_variability" placeholder="e.g., 2.4" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Width</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-arrows-alt-h"></i>
+                                <input type="number" step="0.001" name="histogram_width" placeholder="e.g., 64.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Min</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-arrow-down"></i>
+                                <input type="number" step="0.001" name="histogram_min" placeholder="e.g., 62.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Max</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-arrow-up"></i>
+                                <input type="number" step="0.001" name="histogram_max" placeholder="e.g., 126.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>No. of Peaks</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-mountain"></i>
+                                <input type="number" step="0.001" name="histogram_number_of_peaks" placeholder="e.g., 2.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>No. of Zeroes</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-times-circle"></i>
+                                <input type="number" step="0.001" name="histogram_number_of_zeroes" placeholder="e.g., 0.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Mode</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-bullseye"></i>
+                                <input type="number" step="0.001" name="histogram_mode" placeholder="e.g., 120.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Mean</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-equals"></i>
+                                <input type="number" step="0.001" name="histogram_mean" placeholder="e.g., 137.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Median</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-divide"></i>
+                                <input type="number" step="0.001" name="histogram_median" placeholder="e.g., 121.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Variance</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-chart-area"></i>
+                                <input type="number" step="0.001" name="histogram_variance" placeholder="e.g., 73.0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Histogram Tendency</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-long-arrow-alt-right"></i>
+                                <input type="number" step="0.001" name="histogram_tendency" placeholder="e.g., 1.0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="submit-section">
+                        <button type="button" class="btn-reset" onclick="resetForm()">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                        <button type="submit" class="btn-submit">
+                            Analyze Fetal Health <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toast System
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: 'fa-check-circle',
+                warning: 'fa-exclamation-triangle',
+                error: 'fa-times-circle',
+                info: 'fa-info-circle'
+            };
+            
+            const colors = {
+                success: '#10b981',
+                warning: '#f59e0b',
+                error: '#ef4444',
+                info: '#0f766e'
+            };
+            
+            toast.innerHTML = `
+                <i class="fas ${icons[type]}" style="font-size: 20px; color: ${colors[type]};"></i>
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 2px;">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                    <div style="font-size: 14px; color: #64748b;">${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.5s ease forwards';
+                setTimeout(() => toast.remove(), 500);
+            }, duration);
+        }
+
+        // Progress Bar
+        const inputs = document.querySelectorAll('input[type="number"]');
+        const progressFill = document.getElementById('progressFill');
+        
+        function updateProgress() {
+            const filled = Array.from(inputs).filter(input => input.value.trim() !== '').length;
+            const percentage = (filled / inputs.length) * 100;
+            progressFill.style.width = percentage + '%';
+            
+            if (percentage === 100) {
+                showToast('All parameters filled! Ready for analysis.', 'success');
+            }
+        }
+
+        inputs.forEach(input => {
+            input.addEventListener('input', updateProgress);
+            input.addEventListener('blur', function() {
+                if (this.value) {
+                    this.parentElement.parentElement.classList.add('success');
+                    this.parentElement.parentElement.classList.remove('error');
+                }
+            });
+        });
+
+        // Form Validation
+        document.getElementById('fetalForm').addEventListener('submit', function(e) {
+            let valid = true;
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    valid = false;
+                    input.parentElement.parentElement.classList.add('error');
+                    input.parentElement.parentElement.classList.remove('success');
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+                showToast('Please fill all required parameters', 'error');
+            } else {
+                showToast('Processing fetal health data...', 'info');
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('fetalForm').reset();
+            progressFill.style.width = '0%';
+            inputs.forEach(input => {
+                input.parentElement.parentElement.classList.remove('success', 'error');
+            });
+            showToast('Form cleared successfully', 'success');
+        }
+
+        // Welcome notification
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                showToast('Enter CTG parameters to begin fetal health analysis', 'info');
+            }, 800);
+        });
+    </script>
+</body>
+</html>
